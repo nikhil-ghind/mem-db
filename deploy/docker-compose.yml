@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  memdb:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      - MEMDB_ADDR=:50051
+      - MEMDB_DEFAULT_TABLE=default
+    restart: unless-stopped
