@@ -2,6 +2,58 @@
 
 An in-memory database engine with B+ tree indexing, concurrent read/write support, range scans, a query execution layer, and gRPC API. Written in Go.
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph clients["Clients"]
+        grpcc["gRPC client<br/>grpcurl, generated stubs"]
+        cli["Interactive CLI<br/>memdb -interactive"]
+    end
+
+    subgraph srv["internal/server"]
+        gs["MemDBServer<br/>Insert / Get / RangeScan / Delete / Execute / Stats<br/>hand-written proto descriptors"]
+    end
+
+    subgraph q["internal/query"]
+        parser["parser.go<br/>tokenizes INSERT / GET / RANGE / DELETE /<br/>CREATE TABLE / DROP TABLE / STATS"]
+        exec["executor.go<br/>ExecuteRaw, times each query"]
+    end
+
+    subgraph eng["internal/engine"]
+        engine["Engine<br/>map of table name to B+ tree<br/>guarded by sync.RWMutex"]
+    end
+
+    subgraph bt["internal/btree"]
+        tree["BPlusTree<br/>own RWMutex, order N"]
+        internal["Internal nodes<br/>routing keys and child pointers"]
+        leaf["Leaf nodes<br/>keys, values, next pointer"]
+    end
+
+    cfg["internal/config<br/>flags and MEMDB_* env"]
+
+    grpcc --> gs
+    cli --> exec
+    gs --> engine
+    gs -->|"Execute raw query"| exec
+    exec --> parser
+    exec --> engine
+    engine --> tree
+    tree --> internal
+    internal --> leaf
+    leaf -->|"next pointer chain"| leaf
+    cfg -.-> gs
+    cfg -.-> engine
+```
+
+The gRPC server and the interactive CLI are two front ends over the same
+`Engine`; every table is one independent B+ tree, so table-level locking in the
+engine only guards the map itself while each tree holds its own `RWMutex`.
+
+### Lookup and range scan
+
+<img src="docs/btree-lookup.svg" alt="B+ tree descent from root to leaf, then a range scan following leaf next pointers" width="880">
+
 ## How It Works
 
 Data is stored in B+ trees (order 128 by default). Each table maps to one B+ tree. Keys are strings, values are arbitrary byte slices.
@@ -114,6 +166,27 @@ grpcurl -plaintext -d '{"table":"default","key":"foo"}' \
   localhost:50051 memdb.MemDB/Get
 ```
 
+## Test
+
+```bash
+go test ./...
+go test -race ./internal/btree/...
+```
+
+Unit tests cover B+ tree insert/get/delete, leaf splits, range scan ordering across leaf-sibling pointers, and concurrent readers under `-race`.
+
+End-to-end smoke against a running server:
+
+```bash
+./memdb &
+grpcurl -plaintext -d '{"table":"default","key":"k1","value":"djE="}' \
+  localhost:50051 memdb.MemDB/Insert
+grpcurl -plaintext -d '{"table":"default","key":"k1"}' \
+  localhost:50051 memdb.MemDB/Get
+grpcurl -plaintext -d '{"table":"default","start_key":"k","end_key":"k~"}' \
+  localhost:50051 memdb.MemDB/RangeScan
+```
+
 ## Docker
 
 ```bash
@@ -123,7 +196,7 @@ docker compose up --build
 
 The server will be available on port 50051.
 
-## Architecture
+## Repository Layout
 
 ```
 cmd/memdb/main.go          Entry point, flag parsing, signal handling

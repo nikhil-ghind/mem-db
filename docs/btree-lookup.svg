@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" width="880" height="400" font-family="Helvetica, Arial, sans-serif">
+  <title>B+ tree point lookup and range scan</title>
+
+  <text x="440" y="26" text-anchor="middle" fill="#8b949e" font-size="16" font-weight="bold">mem-db: B+ tree descent, then range scan along leaf links</text>
+
+  <!-- edges root -> internal -->
+  <g stroke="#8b949e" stroke-width="1.5" fill="none" opacity="0.7">
+    <path d="M440 96 L250 150"/>
+    <path d="M440 96 L630 150"/>
+    <path d="M250 186 L75 250"/>
+    <path d="M250 186 L215 250"/>
+    <path d="M250 186 L355 250"/>
+    <path d="M630 186 L495 250"/>
+    <path d="M630 186 L635 250"/>
+    <path d="M630 186 L775 250"/>
+  </g>
+
+  <!-- root -->
+  <rect x="380" y="60" width="120" height="36" rx="5" fill="#58a6ff" fill-opacity="0.14" stroke="#58a6ff" stroke-width="2"/>
+  <text x="440" y="83" text-anchor="middle" fill="#58a6ff" font-size="14" font-weight="bold">root: m</text>
+  <text x="340" y="83" text-anchor="end" fill="#8b949e" font-size="12">internal</text>
+
+  <!-- internal level -->
+  <rect x="180" y="150" width="140" height="36" rx="5" fill="#58a6ff" fill-opacity="0.14" stroke="#58a6ff" stroke-width="2"/>
+  <text x="250" y="173" text-anchor="middle" fill="#58a6ff" font-size="14">d | g</text>
+  <rect x="560" y="150" width="140" height="36" rx="5" fill="#58a6ff" fill-opacity="0.14" stroke="#58a6ff" stroke-width="2"/>
+  <text x="630" y="173" text-anchor="middle" fill="#58a6ff" font-size="14">q | t</text>
+  <text x="150" y="173" text-anchor="end" fill="#8b949e" font-size="12">routing<tspan x="150" dy="15">keys only</tspan></text>
+
+  <!-- leaves -->
+  <g stroke="#3fb950" stroke-width="2" fill="#3fb950" fill-opacity="0.14">
+    <rect x="20"  y="250" width="110" height="36" rx="5"/>
+    <rect x="160" y="250" width="110" height="36" rx="5"/>
+    <rect x="300" y="250" width="110" height="36" rx="5"/>
+    <rect x="440" y="250" width="110" height="36" rx="5"/>
+    <rect x="580" y="250" width="110" height="36" rx="5"/>
+    <rect x="720" y="250" width="110" height="36" rx="5"/>
+  </g>
+  <g fill="#3fb950" font-size="13" text-anchor="middle">
+    <text x="75"  y="273">a b c</text>
+    <text x="215" y="273">d e f</text>
+    <text x="355" y="273">g h l</text>
+    <text x="495" y="273">m n p</text>
+    <text x="635" y="273">q r s</text>
+    <text x="775" y="273">t u z</text>
+  </g>
+  <text x="440" y="308" text-anchor="middle" fill="#8b949e" font-size="12">leaves hold every key/value and chain through next pointers</text>
+
+  <!-- leaf next-pointer links -->
+  <g stroke="#8b949e" stroke-width="2" fill="none">
+    <path d="M130 268 L158 268"/>
+    <path d="M270 268 L298 268"/>
+    <path d="M410 268 L438 268"/>
+    <path d="M550 268 L578 268"/>
+    <path d="M690 268 L718 268"/>
+  </g>
+
+  <!-- range-scan highlight over the traversed links -->
+  <g stroke="#f0883e" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M550 268 L578 268" stroke-opacity="0">
+      <animate attributeName="stroke-opacity" values="0;0;1;1" keyTimes="0;0.60;0.66;1" dur="9s" repeatCount="indefinite"/>
+    </path>
+    <path d="M690 268 L718 268" stroke-opacity="0">
+      <animate attributeName="stroke-opacity" values="0;0;1;1" keyTimes="0;0.72;0.78;1" dur="9s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- traversal cursor -->
+  <circle r="11" fill="#f0883e" fill-opacity="0.85" stroke="#f0883e" stroke-width="2" cx="440" cy="78">
+    <animate attributeName="cx" dur="9s" repeatCount="indefinite"
+      values="440;440;630;630;495;495;635;635;775;775"
+      keyTimes="0;0.08;0.20;0.32;0.44;0.52;0.62;0.70;0.80;1"/>
+    <animate attributeName="cy" dur="9s" repeatCount="indefinite"
+      values="78;78;168;168;268;268;268;268;268;268"
+      keyTimes="0;0.08;0.20;0.32;0.44;0.52;0.62;0.70;0.80;1"/>
+  </circle>
+
+  <!-- stage captions -->
+  <g text-anchor="middle" font-size="14" font-weight="bold">
+    <text x="440" y="350" fill="#f0883e" opacity="1">1. findLeaf compares the key against the root routing key
+      <animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="1;1;0;0" keyTimes="0;0.17;0.19;1"/>
+    </text>
+    <text x="440" y="350" fill="#f0883e" opacity="0">2. descend into the internal node covering that range
+      <animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;0.17;0.19;0.39;0.41;1"/>
+    </text>
+    <text x="440" y="350" fill="#f0883e" opacity="0">3. binary search inside the leaf returns the value
+      <animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;0.39;0.41;0.57;0.59;1"/>
+    </text>
+    <text x="440" y="350" fill="#f0883e" opacity="0">4. RANGE keeps walking next pointers until endKey
+      <animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1" keyTimes="0;0.57;0.59;1"/>
+    </text>
+  </g>
+
+  <text x="440" y="378" text-anchor="middle" fill="#8b949e" font-size="12">reads take RLock, writes take Lock; a leaf splits once it reaches order keys</text>
+</svg>
